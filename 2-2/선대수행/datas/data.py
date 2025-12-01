@@ -2,7 +2,34 @@ import pandas as pd
 from jamo import h2j, j2hcj
 import copy
 
-korean_list = list("ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ")
+korean_list = list("ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㅏㅐㅑㅓㅔㅕㅗㅛㅜㅠㅡㅣ")
+double_jamo = {
+    "ㄳ": "ㄱㅅ",
+    "ㄵ": "ㄴㅈ",
+    "ㄶ": "ㄴㅎ",
+    "ㄺ": "ㄹㄱ",
+    "ㄻ": "ㄹㅁ",
+    "ㄼ": "ㄹㅂ",
+    "ㄽ": "ㄹㅅ",
+    "ㄾ": "ㄹㅌ",
+    "ㄿ": "ㄹㅍ",
+    "ㅀ": "ㄹㅎ",
+    "ㅄ": "ㅂㅅ",
+    "ㅘ": "ㅗㅏ",
+    "ㅙ": "ㅗㅐ",
+    "ㅚ": "ㅗㅣ",
+    "ㅝ": "ㅜㅓ",
+    "ㅞ": "ㅜㅔ",
+    "ㅟ": "ㅜㅣ",
+    "ㅢ": "ㅡㅣ",
+    "ㄲ": "ㄱ",
+    "ㄸ": "ㄷ",
+    "ㅃ": "ㅂ",
+    "ㅆ": "ㅅ",
+    "ㅉ": "ㅈ",
+    "ㅒ": "ㅐ",
+    "ㅖ": "ㅔ"
+}
 
 def preprocess_word(words = pd.DataFrame()):
     words_count = dict() #jamo freq
@@ -15,7 +42,12 @@ def preprocess_word(words = pd.DataFrame()):
         raw_weight[i] = copy.deepcopy(words_count)
 
     for i in words.iterrows(): 
-        syllables = j2hcj(h2j(i[1]['단어'])) #jamo seperate
+        syllables = list(j2hcj(h2j(i[1]['단어']))) #jamo seperate
+        for j, sy in enumerate(syllables):
+            if sy in double_jamo.keys(): #이중자모 분리
+                syllables.pop(j)
+                syllables[j:j] = list(double_jamo[sy])
+
         for j in enumerate(syllables): #freq
             index, char = j[0], j[1]
             try:
@@ -48,8 +80,6 @@ if __name__ == "__main__":
 
     high_weight = pd.DataFrame(high_result[1], index=korean_list)
     all_weight = pd.DataFrame(all_result[1], index=korean_list)
-
-    print(all_weight)
 
     #Save csv
     high_count.to_csv("datas/high_count.csv", index=True, encoding='utf-8-sig')
